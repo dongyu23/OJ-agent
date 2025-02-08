@@ -129,4 +129,13 @@ streamlit run Pipeline/ui.py
 
 ## 许可证
 
-MIT License
+本项目采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh) 许可证。
+
+这意味着您可以：
+- ✅ 复制、分享和修改本项目
+- ✅ 将本项目用于个人学习和研究
+
+但您必须：
+- ❌ 禁止用于商业目的
+- ✅ 保留原作者署名
+- ✅ 使用相同的许可证分发衍生作品
