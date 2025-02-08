@@ -1,39 +1,81 @@
 import streamlit as st
 import requests
 import json
-from typing import Dict, Any
+import logging
+from typing import Optional, Dict, Any
 
-# 设置页面配置
-st.set_page_config(
-    page_title="AI编程助手",
-    page_icon="🤖",
-    layout="wide"
-)
+# 配置日志
+logging.basicConfig(level=logging.INFO,
+                   format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-# 设置API URL
-API_URL = "http://localhost:5001/api"
+# API配置
+API_URL = "http://localhost:5001"
 
-def send_request(query: str, problem_content: str, editor_code: str) -> Dict[str, Any]:
-    """发送请求到API服务器"""
-    try:
-        # 检查API健康状态
-        health_response = requests.get(f"{API_URL}/health")
-        health_response.raise_for_status()
-        
-        # 准备请求数据
-        data = {
-            "query": query,
-            "problem_content": problem_content,
-            "editor_code": editor_code
+def create_response_containers():
+    """创建用于显示响应的容器"""
+    if "response_containers" not in st.session_state:
+        st.session_state.response_containers = {
+            "intent": st.empty(),
+            "task": st.empty(),
+            "questions": st.empty()
         }
-        
-        # 发送分析请求
-        response = requests.post(f"{API_URL}/analyze", json=data)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"API请求错误: {str(e)}")
-        return {}
+    return st.session_state.response_containers
+
+def process_stream_response(response: requests.Response, containers: Dict):
+    """处理流式响应"""
+    intent_shown = False
+    task_response = ""
+    
+    try:
+        for line in response.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                if line.startswith("data: "):
+                    try:
+                        data = json.loads(line[6:])
+                        
+                        # 处理意图分析结果
+                        if data["type"] == "intent" and not intent_shown:
+                            intent_result = data["data"]
+                            containers["intent"].markdown(f"""
+                            ### 意图分析结果
+                            - 意图: {intent_result['intent']}
+                            - 安全性: {'安全' if intent_result['safe'] else '不安全'}
+                            - 操作: {intent_result['action']}
+                            - 需要代码: {'是' if intent_result['need_code'] else '否'}
+                            - 响应: {intent_result['response']}
+                            """)
+                            intent_shown = True
+                        
+                        # 处理任务执行结果
+                        elif data["type"] == "content":
+                            task_response += data["data"]
+                            containers["task"].markdown(f"""
+                            ### 任务执行结果
+                            {task_response}
+                            """)
+                        
+                        # 处理预测的问题
+                        elif data["type"] == "predicted_questions":
+                            questions = data["data"]
+                            if questions:
+                                questions_md = "### 预测的后续问题\n"
+                                for q in questions:
+                                    questions_md += f"- {q['question']}\n"
+                                containers["questions"].markdown(questions_md)
+                        
+                        # 处理错误
+                        elif data["type"] == "error":
+                            st.error(f"发生错误: {data['data']}")
+                            
+                    except json.JSONDecodeError as e:
+                        logger.error(f"JSON解析错误: {str(e)}")
+                        st.error("解析响应时出错")
+                        
+    except Exception as e:
+        logger.error(f"处理流式响应时出错: {str(e)}")
+        st.error(f"处理响应时出错: {str(e)}")
 
 def main():
     # 标题
@@ -115,50 +157,47 @@ if __name__ == '__main__':
                 st.warning("请输入问题")
                 return
                 
-            with st.spinner("正在处理请求..."):
-                result = send_request(query, problem_content, editor_code)
-                
-                if result:
-                    # 存储结果到session_state
-                    st.session_state.last_result = result
-                    # 触发右侧更新
-                    st.session_state.should_update = True
-                    st.rerun()
+            # 创建响应容器
+            containers = create_response_containers()
+            
+            try:
+                # 发送流式请求
+                with st.spinner("正在处理..."):
+                    response = requests.post(
+                        f"{API_URL}/api/analyze/stream",
+                        json={
+                            "query": query,
+                            "problem_content": problem_content,
+                            "editor_code": editor_code
+                        },
+                        stream=True,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        # 处理流式响应
+                        process_stream_response(response, containers)
+                    else:
+                        st.error(f"请求失败: {response.status_code}")
+                        
+            except requests.exceptions.Timeout:
+                st.error("请求超时，请重试")
+            except requests.exceptions.RequestException as e:
+                st.error(f"请求出错: {str(e)}")
+            except Exception as e:
+                st.error(f"处理出错: {str(e)}")
 
     with right_col:
-        # 结果显示区域
-        st.subheader("📊 结果展示")
-        
-        if hasattr(st.session_state, 'last_result') and st.session_state.last_result:
-            result = st.session_state.last_result
-            
-            # 意图识别结果
-            with st.expander("🎯 意图识别结果", expanded=True):
-                st.markdown(f"""
-                - **识别的意图**: {result.get('intent', '未知')}
-                - **是否安全**: {'✅ 安全' if result.get('safe') else '❌ 不安全'}
-                - **处理动作**: {result.get('action', '未知')}
-                - **需要代码**: {'是' if result.get('need_code') else '否'}
-                """)
-                st.markdown(f"**响应**: {result.get('response', '')}")
-            
-            # 任务执行结果
-            if result.get('task_success') is not None:
-                with st.expander("🛠️ 任务执行结果", expanded=True):
-                    st.markdown(f"""
-                    - **执行状态**: {'✅ 成功' if result.get('task_success') else '❌ 失败'}
-                    """)
-                    st.markdown(f"**执行响应**: {result.get('task_response', '')}")
-            
-            # 预测的问题
-            predicted_questions = result.get('predicted_questions', [])
-            if predicted_questions:
-                with st.expander("🔮 预测的后续问题", expanded=True):
-                    for i, pred in enumerate(predicted_questions, 1):
-                        st.markdown(f"{i}. {pred.get('question', '')}")
-                        if st.button(f"使用问题 {i}", key=f"use_q_{i}"):
-                            st.session_state.query = pred.get('question', '')
-                            st.rerun()
+        # 帮助信息
+        st.subheader("💡 使用说明")
+        st.markdown("""
+        1. 在左侧输入区域填写题目内容和代码
+        2. 输入你的问题，比如：
+           - 这段代码的时间复杂度是多少？
+           - 如何优化这个算法？
+           - 有什么边界情况需要考虑？
+        3. 点击"发送请求"按钮获取AI助手的回答
+        """)
 
 if __name__ == "__main__":
     main()

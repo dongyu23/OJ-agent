@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -8,6 +9,7 @@ from recognition_server import analyze_intent, ai_assistant
 from task_executor import task_executor
 import os
 from dotenv import load_dotenv
+import json
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
@@ -100,6 +102,56 @@ async def analyze_query(request: QueryRequest):
         
     except Exception as e:
         logger.error(f"处理请求时出错: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/analyze/stream")
+async def analyze_query_stream(request: QueryRequest):
+    """流式分析用户查询并返回结果"""
+    try:
+        logger.info(f"收到新的流式查询请求: {request.query}")
+        
+        # 设置上下文
+        task_executor.set_problem_content(request.problem_content)
+        task_executor.set_editor_code(request.editor_code)
+        
+        async def generate():
+            try:
+                # 1. 首先进行意图分析
+                intent_result = analyze_intent(request.query, ai_assistant)
+                if not intent_result:
+                    yield f"data: {json.dumps({'type': 'error', 'data': '意图分析失败'})}\n\n"
+                    return
+                
+                # 立即发送意图分析结果
+                yield f"data: {json.dumps({'type': 'intent', 'data': intent_result})}\n\n"
+                
+                # 2. 如果请求安全且可以处理，则流式执行任务
+                if intent_result['safe'] and intent_result['action'] == 'proceed':
+                    async for chunk in task_executor.execute_task_stream(
+                        intent=intent_result['intent'],
+                        query=request.query,
+                        need_code=intent_result['need_code']
+                    ):
+                        yield f"data: {json.dumps(chunk)}\n\n"
+                
+                # 3. 发送结束信号
+                yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"生成响应时出错: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'data': str(e)})}\n\n"
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"处理流式请求时出错: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/health")

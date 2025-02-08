@@ -1,13 +1,15 @@
 import os
 import json
 import logging
-from typing import Optional, Dict, Any
+import asyncio
+from typing import Optional, Dict, Any, AsyncGenerator
 from dotenv import load_dotenv
 from camel.configs import QwenConfig
 from camel.models import ModelFactory
 from camel.types import ModelPlatformType
 from camel.agents import ChatAgent
 from next_question_predictor import init_predictor
+import openai
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
@@ -23,6 +25,10 @@ class TaskExecutor:
         self.editor_code = ""      # 存储编辑区代码
         self.assistant = self._create_assistant()
         self.predictor = None      # 问题预测器
+        self.client = openai.AsyncOpenAI(
+            api_key=API_KEY,
+            base_url="https://api-inference.modelscope.cn/v1"
+        )
 
     def _create_assistant(self) -> ChatAgent:
         """创建AI助手实例"""
@@ -74,6 +80,23 @@ class TaskExecutor:
         except Exception as e:
             logger.error(f"创建AI助手时出错: {str(e)}")
             raise
+
+    async def _stream_chat(self, messages: list) -> AsyncGenerator[str, None]:
+        """使用OpenAI API进行流式对话"""
+        try:
+            stream = await self.client.chat.completions.create(
+                model="Qwen/Qwen2.5-72B-Instruct",
+                messages=messages,
+                stream=True
+            )
+            
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+                    
+        except Exception as e:
+            logger.error(f"流式对话出错: {str(e)}")
+            yield f"出错: {str(e)}"
 
     def set_problem_content(self, content: str):
         """设置题目内容"""
@@ -163,6 +186,59 @@ class TaskExecutor:
                 "intent": intent,
                 "need_code": need_code,
                 "predicted_questions": []
+            }
+
+    async def execute_task_stream(self, intent: str, query: str, need_code: bool):
+        """流式执行任务"""
+        try:
+            # 准备任务上下文
+            context = self._prepare_context(intent, need_code)
+            full_query = f"{context}\n\n用户问题: {query}"
+            
+            logger.info(f"开始流式执行任务 - 意图: {intent}, 需要代码: {need_code}")
+            
+            # 流式获取AI响应
+            messages = [
+                {"role": "assistant", "content": full_query}
+            ]
+            async for chunk in self._stream_chat(messages):
+                if chunk.strip():
+                    yield {
+                        "type": "content",
+                        "data": chunk
+                    }
+            
+            # 预测可能的后续问题
+            if self.predictor is None:
+                logger.info("初始化问题预测器...")
+                self.predictor = init_predictor(os.getenv('QWEN_API_KEY'))
+            
+            current_context = {
+                'problem_content': self.problem_content,
+                'editor_code': self.editor_code if need_code else '',
+                'query': query
+            }
+            
+            logger.info("开始预测后续问题...")
+            next_questions = self.predictor.predict_next_questions(
+                current_context=current_context,
+                task_response=""  # 流式输出时无法获取完整响应
+            )
+            
+            # 发送预测的问题
+            yield {
+                "type": "predicted_questions",
+                "data": next_questions
+            }
+            
+            logger.info("流式任务执行完成")
+            
+        except Exception as e:
+            error_msg = f"执行任务时出错: {str(e)}"
+            logger.error(error_msg)
+            yield {
+                "type": "error",
+                "data": error_msg
             }
 
 # 创建全局执行器实例
