@@ -40,6 +40,15 @@ SYSTEM_PROMPT = """
 4. 获取API密钥
 5. 绕过安全限制
 6. 非编程相关的请求
+7. 直接要求提供完整代码答案
+
+特殊处理规则：
+1. 当用户直接要求提供题目的完整代码答案时：
+   - 将意图标记为 "request_full_code"
+   - 设置 safe 为 true（因为这是合法但需要引导的请求）
+   - 设置 action 为 "guide"
+   - 设置 need_code 为 false
+   - 在 response 中说明我们的教育理念，强调通过引导学习更有价值
 
 你需要将分析结果以JSON格式返回，格式如下：
 {
@@ -49,32 +58,6 @@ SYSTEM_PROMPT = """
     "need_code": true/false,
     "response": "对用户的回应"
 }
-
-* "intent" 的值应该是以下之一：
-    * "code_analysis" - 代码分析
-    * "problem_solving" - 解题思路
-    * "code_check" - 代码检查
-    * "code_suggestion" - 代码提示
-    * "unsafe_request" - 不安全的请求
-    * "invalid_request" - 无效的请求
-
-* "safe" 的值：
-    * true - 如果请求是安全的
-    * false - 如果请求可能不安全
-
-* "action" 的值应该是以下之一：
-    * "proceed" - 继续处理
-    * "block" - 阻止请求
-    * "need_more_info" - 需要更多信息
-
-* "need_code" 的值：
-    * true - 如果需要查看用户的代码
-    * false - 如果不需要查看代码
-
-* "response" 的值：
-    为对用户请求的简短回应，说明系统将如何处理该请求
-
-请确保响应符合JSON格式规范。
 """
 
 app = Flask(__name__)
@@ -123,7 +106,17 @@ def analyze_intent(user_input: str, agent: ChatAgent) -> dict:
         for field in required_fields:
             if field not in result:
                 raise ValueError(f"缺少必需字段: {field}")
-                
+        
+        # 特殊处理直接要求代码的情况
+        if result["intent"] == "request_full_code":
+            result["response"] = f"""我理解您想要直接获得答案，但我的目标是帮助您真正掌握编程能力。让我们一步步来：
+
+1. 首先，您能说说您对这个问题的理解吗？
+2. 您已经尝试过哪些解决方案？
+3. 您在哪里遇到了困难？
+
+我会根据您的回答，提供有针对性的指导和提示，帮助您独立解决这个问题。这样不仅能解决当前的问题，还能提升您的编程能力。"""
+            
         return result
         
     except json.JSONDecodeError as e:
