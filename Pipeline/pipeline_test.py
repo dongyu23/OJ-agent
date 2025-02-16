@@ -42,17 +42,29 @@ class PipelineTester:
                 print(f"任务响应: {intent_result.get('task_response')}")
             
             # 3. 如果安全，执行任务已经在process_request中完成，直接返回结果
-            if intent_result.get('safe') and intent_result.get('action') == 'proceed':
-                print("\n3. 任务已执行")
-                
-                # 4. 显示预测的问题
-                predicted_questions = intent_result.get('predicted_questions', [])
-                print(f"\n4. 预测的后续问题 (共 {len(predicted_questions)} 个):")
-                for i, pred in enumerate(predicted_questions, 1):
-                    print(f"\n预测 {i}: {pred.get('question')}")
+            if intent_result.get('safe'):
+                if intent_result.get('action') == 'proceed':
+                    print("\n3. 任务已执行")
                     
+                    # 4. 显示预测的问题
+                    predicted_questions = intent_result.get('predicted_questions', [])
+                    print(f"\n4. 预测的后续问题 (共 {len(predicted_questions)} 个):")
+                    for i, pred in enumerate(predicted_questions, 1):
+                        print(f"\n预测 {i}: {pred.get('question')}")
+                elif intent_result.get('action') == 'generate_diagram':
+                    print("\n3. 流程图已生成")
+                elif intent_result.get('action') == 'visualize':
+                    print("\n3. 生动形象的解释已生成")
+                    
+                    # 显示预测的问题
+                    predicted_questions = intent_result.get('predicted_questions', [])
+                    print(f"\n4. 预测的后续问题 (共 {len(predicted_questions)} 个):")
+                    for i, pred in enumerate(predicted_questions, 1):
+                        print(f"\n预测 {i}: {pred.get('question')}")
+                else:
+                    print("\n任务被阻止执行")
             else:
-                print("\n任务被阻止执行")
+                print("\n任务被阻止执行：不安全的请求")
                 
             return intent_result
                 
@@ -102,8 +114,32 @@ def twoSum(nums, target):
         "editor_code": ""
     }
     
-    # 运行测试用例
-    test_cases = [test_case_1, test_case_2, test_case_3]
+    # 测试用例4：流程图生成
+    test_case_4 = {
+        "name": "流程图生成测试",
+        "query": "请为快速排序算法生成一个流程图",
+        "problem_content": "",
+        "editor_code": ""
+    }
+    
+    # 测试用例5：复杂流程图
+    test_case_5 = {
+        "name": "复杂流程图测试",
+        "query": "请生成一个展示用户登录和认证流程的流程图",
+        "problem_content": "",
+        "editor_code": ""
+    }
+    
+    # 测试用例6：可视化解释
+    test_case_6 = {
+        "name": "可视化解释测试",
+        "query": "请用生动形象的方式解释递归的概念",
+        "problem_content": "",
+        "editor_code": ""
+    }
+    
+    # 运行测试用例 test_case_1, test_case_2, test_case_3, test_case_4, test_case_5, 
+    test_cases = [test_case_6]
     
     for test_case in test_cases:
         print("\n" + "="*80)

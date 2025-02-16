@@ -1,141 +1,79 @@
 # AI编程助手
 
-基于camel-ai多智能体框架的智能编程助手系统，提供实时代码分析、问题解答和智能推荐功能。
+基于camel-ai多智能体框架的智能编程助手系统，提供代码分析、算法可视化和交互式学习功能。
 
 ## 功能特点
 
-- 🔍 **智能意图识别**：准确识别用户意图，提供针对性服务
-- 💡 **实时代码分析**：分析代码复杂度、性能瓶颈和优化建议
-- 🤖 **多轮对话**：支持上下文理解和多轮交互
-- 🔮 **智能问题预测**：预测用户可能的后续问题
-- 📊 **流式响应**：实时展示分析结果
-- 🛡️ **安全防护**：内置安全检查机制
+- **智能意图识别**：自动分析用户意图，提供针对性服务
+- **代码分析**：分析代码质量、复杂度和优化建议
+- **算法可视化**：生成算法流程图，帮助理解算法原理
+- **生动解释**：通过生动形象的比喻解释编程概念
+- **问题预测**：智能预测用户可能的后续问题
+- **安全防护**：内置安全检查机制，防止恶意请求
 
 ## 系统架构
 
-```
-├── Pipeline/              # 核心实现目录
-│   ├── api_server.py     # FastAPI服务器
-│   ├── task_executor.py  # 任务执行器
-│   ├── recognition_server.py  # 意图识别服务
-│   ├── next_question_predictor.py  # 问题预测器
-│   └── ui.py            # Streamlit UI界面
-├── requirements.txt      # 项目依赖
-└── README.md            # 项目文档
-```
+### Pipeline模式
+- `recognition_server.py`: 意图识别服务
+- `task_executor.py`: 任务执行器
+- `mermaid_agent.py`: 流程图生成代理
+- `visualization_agent.py`: 可视化解释代理
+- `next_question_predictor.py`: 问题预测器
+- `ui.py`: Web界面实现
 
 ## 快速开始
 
-### 1. 环境要求
-
-- Python 3.8+
-- 安装依赖：
+1. 安装依赖：
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 配置
-
-1. 创建 `.env` 文件并设置：
-```env
+2. 配置环境变量：
+创建`.env`文件并设置：
+```
 QWEN_API_KEY=你的API密钥
 ```
 
-### 3. 启动服务
-
-1. 启动API服务器：
+3. 启动服务：
 ```bash
-python Pipeline/api_server.py
+python -m streamlit run Pipeline/ui.py
 ```
-
-2. 启动UI界面：
-```bash
-streamlit run Pipeline/ui.py
-```
-
-## 使用说明
-
-1. 访问 `http://localhost:8501` 打开UI界面
-2. 在左侧输入区域：
-   - 填写题目内容
-   - 输入或粘贴代码
-   - 提出你的问题
-3. 点击"发送请求"获取AI助手的实时分析和建议
-
-## 技术栈
-
-- **后端框架**：FastAPI
-- **UI框架**：Streamlit
-- **AI模型**：Qwen2.5-72B-Instruct
-- **多智能体框架**：camel-ai
-- **API集成**：ModelScope API
-
-## 主要特性
-
-### 1. 流式输出
-- 实时展示分析进度
-- 分步显示不同类型的结果
-- 支持长文本生成
-
-### 2. 意图识别
-- 智能分析用户意图
-- 安全性检查
-- 精准的任务分发
-
-### 3. 代码分析
-- 复杂度分析
-- 性能优化建议
-- 代码质量检查
-
-### 4. 智能推荐
-- 上下文感知
-- 预测后续问题
-- 个性化建议
 
 ## 开发指南
 
-### 添加新功能
-
-1. 在 `Pipeline/` 目录下创建新的功能模块
-2. 在 `api_server.py` 中添加新的API端点
-3. 在 `ui.py` 中添加对应的UI组件
-4. 更新 `requirements.txt` 添加新依赖
-
 ### 代码规范
+- 使用black进行代码格式化
+- 使用isort进行导入排序
+- 使用flake8进行代码检查
+- 使用mypy进行类型检查
 
-- 使用类型注解
-- 添加详细的文档字符串
-- 遵循PEP 8编码规范
-- 添加适当的日志记录
+### 测试
+```bash
+pytest Pipeline/pipeline_test.py
+```
 
-## 常见问题
+## 技术栈
 
-1. **API连接失败**
-   - 检查API密钥是否正确
-   - 确认网络连接正常
-   - 查看服务器日志
+- **框架**: camel-ai, streamlit
+- **AI模型**: Qwen2.5-72B
+- **开发工具**: pytest, black, isort, flake8, mypy
+- **其他**: python-dotenv, requests, typing-extensions, loguru
 
-2. **流式输出问题**
-   - 检查浏览器兼容性
-   - 确认网络稳定性
-   - 查看服务器负载
+## 注意事项
 
-## 贡献指南
-
-1. Fork 项目
-2. 创建功能分支
-3. 提交变更
-4. 发起 Pull Request
+1. 请确保有足够的系统资源运行大型语言模型
+2. API密钥请妥善保管，不要泄露
+3. 建议使用Python 3.8+版本
 
 ## 许可证
 
 本项目采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh) 许可证。
 
 这意味着您可以：
-- ✅ 复制、分享和修改本项目
-- ✅ 将本项目用于个人学习和研究
+- 复制、分享和修改本项目
+- 将本项目用于个人学习和研究
 
 但您必须：
-- ❌ 禁止用于商业目的
-- ✅ 保留原作者署名
-- ✅ 使用相同的许可证分发衍生作品
+- 禁止用于商业目的
+- 保留原作者署名
+- 使用相同的许可证分发衍生作品
