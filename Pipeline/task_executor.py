@@ -145,34 +145,25 @@ class TaskExecutor:
         else:
             logger.info("编辑区代码为空，跳过更新")
 
-    def _prepare_context(self, intent: str, need_code: bool) -> str:
-        """根据意图和需求准备上下文"""
+    def _prepare_context(self, need_code: bool) -> str:
+        """根据需求准备上下文"""
         context = f"题目内容:\n{self.problem_content}\n\n"
         
         if need_code and self.editor_code:
             context += f"用户代码:\n{self.editor_code}\n\n"
             
-        context += f"请根据以上内容，"
-        
-        if intent == "code_analysis":
-            context += "分析代码的复杂度和性能，并提供优化建议。"
-        elif intent == "problem_solving":
-            context += "提供清晰的解题思路和方法。"
-        elif intent == "code_check":
-            context += "检查代码的正确性，指出潜在问题。"
-        elif intent == "code_suggestion":
-            context += "提供改进建议和代码示例。"
+        context += f"请根据以上内容提供帮助。"
             
         return context
 
-    def execute_task(self, intent: str, query: str, need_code: bool) -> Dict[str, Any]:
+    def execute_task(self, query: str, need_code: bool) -> Dict[str, Any]:
         """执行具体任务"""
         try:
             # 准备任务上下文
-            context = self._prepare_context(intent, need_code)
+            context = self._prepare_context(need_code)
             full_query = f"{context}\n\n用户问题: {query}"
             
-            logger.info(f"执行任务 - 意图: {intent}, 需要代码: {need_code}")
+            logger.info(f"执行任务 - 需要代码: {need_code}")
             
             # 获取AI响应
             response = self.assistant.step(full_query)
@@ -204,7 +195,6 @@ class TaskExecutor:
             result = {
                 "success": True,
                 "response": task_response,
-                "intent": intent,
                 "need_code": need_code,
                 "predicted_questions": next_questions
             }
@@ -217,19 +207,18 @@ class TaskExecutor:
             return {
                 "success": False,
                 "response": f"执行任务时出错: {str(e)}",
-                "intent": intent,
                 "need_code": need_code,
                 "predicted_questions": []
             }
 
-    async def execute_task_stream(self, intent: str, query: str, need_code: bool):
+    async def execute_task_stream(self, query: str, need_code: bool):
         """流式执行任务"""
         try:
             # 准备任务上下文
-            context = self._prepare_context(intent, need_code)
+            context = self._prepare_context(need_code)
             full_query = f"{context}\n\n用户问题: {query}"
             
-            logger.info(f"开始流式执行任务 - 意图: {intent}, 需要代码: {need_code}")
+            logger.info(f"开始流式执行任务 - 需要代码: {need_code}")
             
             # 流式获取AI响应
             messages = [
