@@ -35,7 +35,7 @@ class TaskExecutor:
         try:
             qwen_model = ModelFactory.create(
                 model_platform=ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
-                model_type="glm4.7",
+                model_type="glm-4",
                 api_key=API_KEY,
                 url="https://llmapi.paratera.com/v1",
                 model_config_dict=QwenConfig(temperature=0.2).as_dict(),
@@ -119,7 +119,7 @@ class TaskExecutor:
         """使用OpenAI API进行流式对话"""
         try:
             stream = await self.client.chat.completions.create(
-                model="glm4.7",
+                model="glm-4",
                 messages=messages,
                 stream=True
             )
