@@ -3,21 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI OJ Environment | Terminal Mode</title>
+    <title>Algorithm Challenge | ProOJ</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css">
+    <!-- Markdown and UI styling -->
     <style>
         :root {
-            --bg-base: #09090b;
-            --bg-panel: #18181b;
-            --bg-surface: #27272a;
-            --text-main: #f4f4f5;
-            --text-muted: #a1a1aa;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.4);
-            --border: #3f3f46;
-            --success: #10b981;
-            --error: #ef4444;
-            --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-            --font-sans: 'Inter', system-ui, sans-serif;
+            /* Light theme variables (default) */
+            --bg-main: #f8f9fa;
+            --bg-panel: #ffffff;
+            --bg-hover: #f1f3f5;
+            --bg-code: #f4f6f8;
+            --border-light: #e9ecef;
+            --border-medium: #dee2e6;
+            
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --text-tertiary: #868e96;
+            
+            --brand-primary: #339af0;
+            --brand-hover: #228be6;
+            --brand-light: #e7f5ff;
+            
+            --success: #20c997;
+            --warning: #fcc419;
+            --error: #ff6b6b;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-mono: 'Source Code Pro', 'Menlo', 'Monaco', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-main: #121212;
+                --bg-panel: #1e1e1e;
+                --bg-hover: #2c2c2c;
+                --bg-code: #252525;
+                --border-light: #333333;
+                --border-medium: #444444;
+                
+                --text-primary: #f8f9fa;
+                --text-secondary: #ced4da;
+                --text-tertiary: #868e96;
+                
+                --brand-primary: #4dabf7;
+                --brand-hover: #339af0;
+                --brand-light: rgba(77, 171, 247, 0.15);
+            }
         }
 
         * {
@@ -27,366 +70,669 @@
         }
 
         body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
             font-family: var(--font-sans);
             height: 100vh;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Navbar */
-        header {
-            height: 50px;
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
+        .navbar {
+            height: 56px;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            z-index: 10;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
         }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
         .logo {
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent-glow);
-            margin-right: 20px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
         }
         
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 8px var(--success);
-            animation: pulse 2s infinite;
+        .logo-icon {
+            background: var(--brand-primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.5; box-shadow: 0 0 4px var(--success); }
-            50% { opacity: 1; box-shadow: 0 0 12px var(--success); }
-            100% { opacity: 0.5; box-shadow: 0 0 4px var(--success); }
+        .problem-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-left: 1px solid var(--border-medium);
+            padding-left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Main Layout */
+        .difficulty {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(252, 196, 25, 0.15);
+            color: #f59f00;
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(51, 154, 240, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(51, 154, 240, 0.3);
+        }
+
+        /* Workspace Layout */
         .workspace {
             display: flex;
             flex: 1;
-            height: calc(100vh - 50px);
+            padding: 12px;
+            gap: 12px;
+            height: calc(100vh - 56px);
         }
 
-        .pane {
+        .panel {
             background: var(--bg-panel);
-            border-right: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
             display: flex;
             flex-direction: column;
-            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
-        
-        .pane-header {
-            height: 40px;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
+
+        .panel-header {
+            height: 44px;
+            padding: 0 16px;
             display: flex;
             align-items: center;
-            padding: 0 15px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            user-select: none;
-        }
-
-        /* Left Pane: Problem */
-        .problem-pane {
-            width: 40%;
-            min-width: 300px;
-        }
-        
-        .problem-content {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .problem-content h2 {
-            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-panel);
+            font-size: 13px;
             font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .problem-content pre {
-            background: var(--bg-surface);
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            margin: 15px 0;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            overflow-x: auto;
-        }
-        
-        textarea.problem-editor {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-family: var(--font-sans);
-            font-size: 14px;
-            line-height: 1.6;
-            resize: none;
-            outline: none;
-        }
-
-        /* Right Panes */
-        .right-panes {
-            width: 60%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Code Editor Pane */
-        .editor-pane {
-            flex: 1;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #monaco-container {
-            flex: 1;
-            width: 100%;
-            position: relative;
-        }
-
-        /* Terminal/Chat Pane */
-        .terminal-pane {
-            height: 40%;
-            min-height: 250px;
-            display: flex;
-            flex-direction: column;
-            background: #000; /* Pure black for terminal */
-        }
-        
-        .terminal-header {
-            background: #111;
-            border-bottom: 1px solid #333;
-        }
-
-        .terminal-output {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--text-muted);
-            scroll-behavior: smooth;
-        }
-
-        .terminal-output .message {
-            margin-bottom: 10px;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .terminal-output .ai-msg {
-            color: var(--text-main);
-        }
-        
-        .terminal-output .ai-msg.intent {
-            color: var(--accent);
-            border-left: 2px solid var(--accent);
-            padding-left: 10px;
-            margin: 15px 0;
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        .terminal-output .user-msg {
-            color: var(--success);
-            margin-top: 15px;
-        }
-
-        .terminal-output .user-msg::before {
-            content: 'user@ai-oj:~$ ';
-            color: var(--success);
-        }
-        
-        .terminal-output .sys-error {
-            color: var(--error);
-        }
-        
-        .terminal-output pre {
-            background: #111;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 8px 0;
-            overflow-x: auto;
-        }
-
-        .terminal-input-area {
-            display: flex;
-            padding: 10px 15px;
-            background: #0a0a0a;
-            border-top: 1px solid #333;
-            align-items: center;
-        }
-        
-        .terminal-prompt {
-            color: var(--success);
-            font-family: var(--font-mono);
-            margin-right: 10px;
-            font-size: 14px;
-            user-select: none;
-        }
-
-        .terminal-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-            font-size: 14px;
-            outline: none;
-            caret-color: var(--accent);
-        }
-        
-        .terminal-input::placeholder {
-            color: #444;
-        }
-
-        .predicted-questions {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
+            color: var(--text-secondary);
             gap: 8px;
         }
         
-        .q-chip {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #333;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .panel-header i {
+            color: var(--text-tertiary);
+            font-size: 16px;
+        }
+
+        /* Description Panel */
+        .description-panel {
+            width: 35%;
+            min-width: 320px;
+        }
+
+        .description-content {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        /* Hidden textarea used to hold state for backend */
+        #problem-textarea {
+            display: none;
+        }
+
+        /* Markdown styling for description */
+        .desc-prose h1, .desc-prose h2, .desc-prose h3 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
         
-        .q-chip:hover {
-            background: var(--accent-glow);
-            border-color: var(--accent);
-            color: #fff;
+        .desc-prose p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .desc-prose code {
+            font-family: var(--font-mono);
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+
+        .desc-prose pre {
+            background: var(--bg-code);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            margin: 16px 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+        }
+
+        .desc-prose pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+        }
+
+        .example-block {
+            margin: 20px 0;
+        }
+        
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .example-content {
+            background: var(--bg-code);
+            border-left: 3px solid var(--border-medium);
+            padding: 12px 16px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        /* Editor & Chat Split */
+        .right-area {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Code Editor Panel */
+        .editor-panel {
+            flex: 1;
+            min-height: 40%;
+        }
+
+        .editor-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .editor-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .editor-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        #monaco-container {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* AI Assistant Panel */
+        .assistant-panel {
+            height: 35%;
+            min-height: 250px;
+        }
+
+        .chat-header {
+            background: var(--brand-light);
+            border-bottom: 1px solid var(--brand-primary);
+            color: var(--brand-primary);
+        }
+
+        .chat-header i {
+            color: var(--brand-primary);
+        }
+
+        .chat-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        .ai-message .msg-avatar {
+            background: var(--brand-light);
+            color: var(--brand-primary);
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .user-message .msg-avatar {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+
+        .msg-bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .ai-message .msg-bubble {
+            background: var(--bg-code);
+            color: var(--text-primary);
+            border-top-left-radius: 4px;
+            border: 1px solid var(--border-light);
+        }
+
+        .user-message .msg-bubble {
+            background: var(--brand-primary);
+            color: white;
+            border-top-right-radius: 4px;
+        }
+
+        /* Markdown in Chat */
+        .msg-bubble p { margin-bottom: 8px; }
+        .msg-bubble p:last-child { margin-bottom: 0; }
+        .msg-bubble code {
+            font-family: var(--font-mono);
+            background: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .user-message .msg-bubble code {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .msg-bubble pre {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+        .msg-bubble pre code {
+            color: #d4d4d4;
+            background: transparent;
+        }
+
+        /* Intent Box */
+        .intent-box {
+            font-size: 12px;
+            padding: 8px 12px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            display: inline-block;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+        .intent-box span { color: var(--text-secondary); font-weight: 500; }
+
+        /* Error Box */
+        .error-box {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid var(--error);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        /* Chat Input Area */
+        .chat-input-wrapper {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-panel);
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .suggestion-chip {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--brand-light);
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            background: var(--bg-main);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-container:focus-within {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px var(--brand-light);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            color: var(--text-primary);
+            resize: none;
+            outline: none;
+            max-height: 120px;
+            min-height: 24px;
+            line-height: 24px;
+            padding: 0;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .send-btn {
+            background: var(--brand-primary);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+
+        .send-btn:hover {
+            background: var(--brand-hover);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: var(--border-medium);
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Scrollbars */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: var(--bg-base);
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: #3f3f46;
-            border-radius: 4px;
+            background: var(--border-medium);
+            border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #52525b;
+            background: var(--text-tertiary);
+        }
+
+        /* Loading Dots */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 8px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
     </style>
     
-    <!-- Load Monaco Editor -->
+    <!-- Monaco Editor -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js"></script>
-    <!-- Marked.js for markdown parsing in terminal -->
+    <!-- Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <header>
-        <div class="logo">TRAE_OJ // SYSTEM</div>
-        <div class="status-dot"></div>
-        <span>SERVER_ONLINE</span>
+    <header class="navbar">
+        <div class="nav-left">
+            <a href="#" class="logo">
+                <div class="logo-icon"><i class="ri-code-s-slash-line"></i></div>
+                ProOJ
+            </a>
+            <div class="problem-title">
+                1024. 找出最多的 "UCC" 子串
+                <span class="difficulty">Medium</span>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-outline"><i class="ri-history-line"></i> Submissions</button>
+            <button class="btn btn-primary"><i class="ri-play-fill"></i> Run Code</button>
+        </div>
     </header>
 
     <div class="workspace">
-        <!-- Left Pane -->
-        <div class="pane problem-pane">
-            <div class="pane-header">DESCRIPTION.md</div>
-            <div class="problem-content">
-                <textarea id="problem-textarea" class="problem-editor">小S有一个由字符 'U' 和 'C' 组成的字符串 S，并希望在编辑距离不超过给定值 m 的条件下，尽可能多地在字符串中找到 "UCC" 子串。
-
-编辑距离定义为将字符串 S 转化为其他字符串时所需的最少编辑操作次数。允许的每次编辑操作是插入、删除或替换单个字符。你需要计算在给定的编辑距离限制 m 下，能够包含最多 "UCC" 子串的字符串可能包含多少个这样的子串。
-
-例如，对于字符串"UCUUCCCCC"和编辑距离限制m = 3，可以通过编辑字符串生成最多包含3个"UCC"子串的序列。
-
-约束条件：
-字符串长度不超过1000
-
-测试样例
-样例1：
-输入：m = 3,s = "UCUUCCCCC"
-输出：3
-
-样例2：
-输入：m = 6,s = "U"
-输出：2
-
-样例3：
-输入：m = 2,s = "UCCUUU"
-输出：2
-
-解释
-样例1：可以将字符串修改为 "UCCUCCUCC"（2 次替换操作，不超过给定值 m = 3），包含 3 个 "UCC" 子串。
-样例2：后面插入 5 个字符 "CCUCC"（5 次插入操作，不超过给定值 m = 6），可以将字符串修改为 "UCCUCC"，包含 2 个 "UCC" 子串。
-样例3：替换最后 2 个字符，可以将字符串修改为 "UCCUCC"，包含 2 个 "UCC" 子串。</textarea>
+        <!-- Problem Description -->
+        <div class="panel description-panel">
+            <div class="panel-header">
+                <i class="ri-file-list-3-line"></i> Description
             </div>
+            <div class="description-content desc-prose">
+                <p>小 S 有一个由字符 <code>'U'</code> 和 <code>'C'</code> 组成的字符串 <code>S</code>，并希望在编辑距离不超过给定值 <code>m</code> 的条件下，尽可能多地在字符串中找到 <code>"UCC"</code> 子串。</p>
+                <p><strong>编辑距离</strong>定义为将字符串 <code>S</code> 转化为其他字符串时所需的最少编辑操作次数。允许的每次编辑操作是<strong>插入</strong>、<strong>删除</strong>或<strong>替换</strong>单个字符。你需要计算在给定的编辑距离限制 <code>m</code> 下，能够包含最多 <code>"UCC"</code> 子串的字符串可能包含多少个这样的子串。</p>
+                
+                <p><em>约束条件：字符串长度不超过 1000</em></p>
+
+                <div class="example-block">
+                    <div class="example-title">Example 1:</div>
+                    <div class="example-content">Input: m = 3, s = "UCUUCCCCC"
+Output: 3
+Explanation: 可以将字符串修改为 "UCCUCCUCC"（2 次替换操作，不超过 m=3），包含 3 个 "UCC"。</div>
+                </div>
+
+                <div class="example-block">
+                    <div class="example-title">Example 2:</div>
+                    <div class="example-content">Input: m = 6, s = "U"
+Output: 2
+Explanation: 后面插入 5 个字符 "CCUCC"（5 次插入操作，不超过 m=6），得到 "UCCUCC"，包含 2 个 "UCC"。</div>
+                </div>
+
+                <div class="example-block">
+                    <div class="example-title">Example 3:</div>
+                    <div class="example-content">Input: m = 2, s = "UCCUUU"
+Output: 2
+Explanation: 替换最后 2 个字符得到 "UCCUCC"，包含 2 个 "UCC"。</div>
+                </div>
+            </div>
+            
+            <!-- Hidden textarea for API submission -->
+            <textarea id="problem-textarea">小S有一个由字符 'U' 和 'C' 组成的字符串 S，并希望在编辑距离不超过给定值 m 的条件下，尽可能多地在字符串中找到 "UCC" 子串。
+编辑距离定义为将字符串 S 转化为其他字符串时所需的最少编辑操作次数。允许的每次编辑操作是插入、删除或替换单个字符。你需要计算在给定的编辑距离限制 m 下，能够包含最多 "UCC" 子串的字符串可能包含多少个这样的子串。
+约束条件：字符串长度不超过1000
+样例1：输入：m = 3,s = "UCUUCCCCC" 输出：3
+样例2：输入：m = 6,s = "U" 输出：2
+样例3：输入：m = 2,s = "UCCUUU" 输出：2</textarea>
         </div>
 
-        <!-- Right Panes -->
-        <div class="right-panes">
+        <div class="right-area">
             <!-- Code Editor -->
-            <div class="pane editor-pane">
-                <div class="pane-header">SOLUTION.PY</div>
+            <div class="panel editor-panel">
+                <div class="panel-header">
+                    <i class="ri-code-box-line"></i> Code Editor
+                    <div class="editor-actions">
+                        <button class="editor-btn" title="Reset Code"><i class="ri-refresh-line"></i></button>
+                        <button class="editor-btn" title="Settings"><i class="ri-settings-3-line"></i></button>
+                        <button class="editor-btn" title="Fullscreen"><i class="ri-fullscreen-line"></i></button>
+                    </div>
+                </div>
                 <div id="monaco-container"></div>
             </div>
 
-            <!-- Terminal -->
-            <div class="pane terminal-pane">
-                <div class="pane-header terminal-header">AI_ASSISTANT_TERMINAL</div>
-                <div class="terminal-output" id="terminal-output">
-                    <div class="message ai-msg">AI Assistant Initialized. Type your question below and press Enter.</div>
+            <!-- AI Assistant Chat -->
+            <div class="panel assistant-panel">
+                <div class="panel-header chat-header">
+                    <i class="ri-robot-2-fill"></i> AI Tutor
                 </div>
-                <div class="terminal-input-area">
-                    <span class="terminal-prompt">user@ai-oj:~$</span>
-                    <input type="text" class="terminal-input" id="chat-input" placeholder="Ask about complexity, bugs, or optimizations..." autocomplete="off" spellcheck="false">
+                <div class="chat-content" id="chat-content">
+                    <div class="chat-message ai-message">
+                        <div class="msg-avatar"><i class="ri-robot-2-line"></i></div>
+                        <div class="msg-bubble">
+                            <p>你好！我是你的专属 AI 编程导师。这道题考察的是字符串的动态规划和贪心策略。</p>
+                            <p>你可以问我关于：</p>
+                            <ul>
+                                <li>解题思路和算法推导</li>
+                                <li>时间复杂度分析</li>
+                                <li>代码 Debug</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-wrapper">
+                    <div class="suggestions" id="suggestions-container">
+                        <!-- Suggestions will be injected here -->
+                    </div>
+                    <div class="input-container">
+                        <textarea class="chat-input" id="chat-input" placeholder="Ask a question..." rows="1"></textarea>
+                        <button class="send-btn" id="send-btn"><i class="ri-send-plane-2-fill"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Theme detection for Monaco
+        const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
         // Default Code
-        const defaultCode = `def solution(m: int, s: str) -> int:
-    # PLEASE DO NOT MODIFY THE FUNCTION SIGNATURE
-    # write code here
-    pass
+        const defaultCode = `class Solution:
+    def maxUCC(self, m: int, s: str) -> int:
+        # Write your code here
+        pass
 
 if __name__ == '__main__':
-    print(solution(m=3, s="UCUUCCCCC") == 3)
-    print(solution(m=6, s="U") == 2)
-    print(solution(m=2, s="UCCUUU") == 2)
+    sol = Solution()
+    print(sol.maxUCC(m=3, s="UCUUCCCCC") == 3)
+    print(sol.maxUCC(m=6, s="U") == 2)
+    print(sol.maxUCC(m=2, s="UCCUUU") == 2)
 `;
 
         // Initialize Monaco Editor
@@ -396,135 +742,228 @@ if __name__ == '__main__':
             editor = monaco.editor.create(document.getElementById('monaco-container'), {
                 value: defaultCode,
                 language: 'python',
-                theme: 'vs-dark',
+                theme: isDarkMode ? 'vs-dark' : 'vs',
                 automaticLayout: true,
                 minimap: { enabled: false },
                 fontSize: 14,
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontFamily: "'Source Code Pro', 'Menlo', monospace",
                 scrollBeyondLastLine: false,
                 roundedSelection: false,
-                padding: { top: 15 }
-            });
-            
-            // Custom Dark Theme Tweaks to match UI
-            monaco.editor.defineTheme('oj-dark', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [],
-                colors: {
-                    'editor.background': '#18181b',
-                    'editor.lineHighlightBackground': '#27272a',
+                padding: { top: 16 },
+                lineHeight: 24,
+                renderLineHighlight: 'all',
+                scrollbar: {
+                    verticalScrollbarSize: 8,
+                    horizontalScrollbarSize: 8
                 }
             });
-            monaco.editor.setTheme('oj-dark');
         });
 
-        // Chat Interaction
-        const inputEl = document.getElementById('chat-input');
-        const outputEl = document.getElementById('terminal-output');
+        // Auto-resize textarea
+        const chatInput = document.getElementById('chat-input');
+        chatInput.addEventListener('input', function() {
+            this.style.height = '24px';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Chat Interaction Logic
+        const chatContent = document.getElementById('chat-content');
+        const sendBtn = document.getElementById('send-btn');
         const problemEl = document.getElementById('problem-textarea');
+        const suggestionsContainer = document.getElementById('suggestions-container');
         
         let isWaiting = false;
 
-        function appendMessage(text, type, isMarkdown = false) {
+        function createMessageElement(type) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}`;
-            if (isMarkdown) {
-                msgDiv.innerHTML = marked.parse(text);
-            } else {
-                msgDiv.textContent = text;
-            }
-            outputEl.appendChild(msgDiv);
-            outputEl.scrollTop = outputEl.scrollHeight;
-            return msgDiv;
+            msgDiv.className = `chat-message ${type}-message`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'msg-avatar';
+            avatar.innerHTML = type === 'ai' ? '<i class="ri-robot-2-line"></i>' : '<i class="ri-user-smile-line"></i>';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-bubble';
+            
+            msgDiv.appendChild(avatar);
+            msgDiv.appendChild(bubble);
+            
+            return { msgDiv, bubble };
         }
 
-        inputEl.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter' && !isWaiting) {
-                const query = inputEl.value.trim();
-                if (!query) return;
+        function appendMessage(text, type, isMarkdown = false) {
+            const { msgDiv, bubble } = createMessageElement(type);
+            
+            if (isMarkdown) {
+                bubble.innerHTML = marked.parse(text);
+            } else {
+                bubble.textContent = text;
+            }
+            
+            chatContent.appendChild(msgDiv);
+            scrollToBottom();
+            return bubble;
+        }
+        
+        function appendIntentBox(action, safe) {
+            const { msgDiv, bubble } = createMessageElement('ai');
+            bubble.innerHTML = `
+                <div class="intent-box">
+                    <i class="ri-shield-check-line"></i> Analysis | 
+                    Action: <span>${action}</span> | 
+                    Safe: <span>${safe}</span>
+                </div>
+                <div class="content-body"></div>
+            `;
+            chatContent.appendChild(msgDiv);
+            scrollToBottom();
+            return bubble.querySelector('.content-body');
+        }
 
-                inputEl.value = '';
-                appendMessage(query, 'user-msg');
-                isWaiting = true;
+        function appendError(text) {
+            const { msgDiv, bubble } = createMessageElement('ai');
+            bubble.innerHTML = `<div class="error-box"><i class="ri-error-warning-line"></i> ${text}</div>`;
+            chatContent.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function appendTypingIndicator() {
+            const { msgDiv, bubble } = createMessageElement('ai');
+            msgDiv.id = 'typing-indicator';
+            bubble.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+            `;
+            chatContent.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function updateSuggestions(questions) {
+            suggestionsContainer.innerHTML = '';
+            if (!questions || questions.length === 0) return;
+            
+            questions.forEach(q => {
+                const chip = document.createElement('div');
+                chip.className = 'suggestion-chip';
+                chip.innerHTML = `<i class="ri-lightbulb-flash-line"></i> ${q.question}`;
+                chip.onclick = () => {
+                    chatInput.value = q.question;
+                    chatInput.focus();
+                    handleSend();
+                };
+                suggestionsContainer.appendChild(chip);
+            });
+        }
+
+        function scrollToBottom() {
+            chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        async function handleSend() {
+            if (isWaiting) return;
+            const query = chatInput.value.trim();
+            if (!query) return;
+
+            // Reset input
+            chatInput.value = '';
+            chatInput.style.height = '24px';
+            suggestionsContainer.innerHTML = '';
+            
+            appendMessage(query, 'user');
+            isWaiting = true;
+            sendBtn.disabled = true;
+            
+            appendTypingIndicator();
+            
+            let currentContentBody = null;
+            let fullResponse = '';
+            
+            try {
+                const response = await fetch('/api/analyze/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        problem_content: problemEl.value,
+                        editor_code: editor ? editor.getValue() : defaultCode
+                    })
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
                 
-                // Active streaming container
-                let currentAiMsg = appendMessage('', 'ai-msg', false);
-                let fullResponse = '';
-                
-                try {
-                    const response = await fetch('/api/analyze/stream', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: query,
-                            problem_content: problemEl.value,
-                            editor_code: editor ? editor.getValue() : defaultCode
-                        })
-                    });
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
 
-                    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                removeTypingIndicator();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
                     
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder('utf-8');
-                    
-                    let buffer = '';
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop(); // Keep incomplete block
 
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        
-                        buffer += decoder.decode(value, { stream: true });
-                        const lines = buffer.split('\n');
-                        buffer = lines.pop(); // Keep incomplete line in buffer
-
-                        for (const line of lines) {
-                            if (line.startsWith('data: ')) {
-                                try {
-                                    const data = JSON.parse(line.substring(6));
-                                    
-                                    if (data.type === 'intent') {
-                                        const intentHtml = `[SYSTEM] Intent Analysis
-Action: ${data.data.action} | Safe: ${data.data.safe} | Need Code: ${data.data.need_code}`;
-                                        appendMessage(intentHtml, 'ai-msg intent');
-                                    } else if (data.type === 'content') {
-                                        fullResponse += data.data;
-                                        currentAiMsg.innerHTML = marked.parse(fullResponse);
-                                        outputEl.scrollTop = outputEl.scrollHeight;
-                                    } else if (data.type === 'predicted_questions') {
-                                        const qContainer = document.createElement('div');
-                                        qContainer.className = 'predicted-questions';
-                                        data.data.forEach(q => {
-                                            const chip = document.createElement('span');
-                                            chip.className = 'q-chip';
-                                            chip.textContent = '> ' + q.question;
-                                            chip.onclick = () => {
-                                                inputEl.value = q.question;
-                                                inputEl.focus();
-                                            };
-                                            qContainer.appendChild(chip);
-                                        });
-                                        outputEl.appendChild(qContainer);
-                                        outputEl.scrollTop = outputEl.scrollHeight;
-                                    } else if (data.type === 'error') {
-                                        appendMessage(`[ERROR] ${data.data}`, 'sys-error');
+                    for (const block of lines) {
+                        const line = block.trim();
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                
+                                if (data.type === 'intent') {
+                                    currentContentBody = appendIntentBox(data.data.action, data.data.safe);
+                                } else if (data.type === 'content') {
+                                    if (!currentContentBody) {
+                                        currentContentBody = appendMessage('', 'ai', false);
                                     }
-                                } catch (e) {
-                                    console.error('Parse error on chunk:', e, line);
+                                    fullResponse += data.data;
+                                    currentContentBody.innerHTML = marked.parse(fullResponse);
+                                    scrollToBottom();
+                                } else if (data.type === 'predicted_questions') {
+                                    updateSuggestions(data.data);
+                                } else if (data.type === 'error') {
+                                    appendError(data.data);
                                 }
+                            } catch (e) {
+                                console.error('Parse error:', e, line);
                             }
                         }
                     }
-                } catch (err) {
-                    appendMessage(`[CONNECTION ERROR] ${err.message}`, 'sys-error');
-                } finally {
-                    isWaiting = false;
                 }
+            } catch (err) {
+                removeTypingIndicator();
+                appendError(`Connection failed: ${err.message}`);
+            } finally {
+                isWaiting = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
             }
         });
         
-        // Focus input by default
-        inputEl.focus();
+        // Setup marked.js options for better code blocks
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+        }
+
     </script>
 </body>
 </html>
