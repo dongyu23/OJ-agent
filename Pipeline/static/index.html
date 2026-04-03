@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI OJ Environment | Terminal Mode</title>
+    <style>
+        :root {
+            --bg-base: #09090b;
+            --bg-panel: #18181b;
+            --bg-surface: #27272a;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --border: #3f3f46;
+            --success: #10b981;
+            --error: #ef4444;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            --font-sans: 'Inter', system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        header {
+            height: 50px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        .logo {
+            color: var(--accent);
+            text-shadow: 0 0 8px var(--accent-glow);
+            margin-right: 20px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; box-shadow: 0 0 4px var(--success); }
+            50% { opacity: 1; box-shadow: 0 0 12px var(--success); }
+            100% { opacity: 0.5; box-shadow: 0 0 4px var(--success); }
+        }
+
+        /* Main Layout */
+        .workspace {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 50px);
+        }
+
+        .pane {
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .pane-header {
+            height: 40px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        /* Left Pane: Problem */
+        .problem-pane {
+            width: 40%;
+            min-width: 300px;
+        }
+        
+        .problem-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .problem-content h2 {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .problem-content pre {
+            background: var(--bg-surface);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin: 15px 0;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        textarea.problem-editor {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        /* Right Panes */
+        .right-panes {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Code Editor Pane */
+        .editor-pane {
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #monaco-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Terminal/Chat Pane */
+        .terminal-pane {
+            height: 40%;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            background: #000; /* Pure black for terminal */
+        }
+        
+        .terminal-header {
+            background: #111;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-output {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-muted);
+            scroll-behavior: smooth;
+        }
+
+        .terminal-output .message {
+            margin-bottom: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .terminal-output .ai-msg {
+            color: var(--text-main);
+        }
+        
+        .terminal-output .ai-msg.intent {
+            color: var(--accent);
+            border-left: 2px solid var(--accent);
+            padding-left: 10px;
+            margin: 15px 0;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .terminal-output .user-msg {
+            color: var(--success);
+            margin-top: 15px;
+        }
+
+        .terminal-output .user-msg::before {
+            content: 'user@ai-oj:~$ ';
+            color: var(--success);
+        }
+        
+        .terminal-output .sys-error {
+            color: var(--error);
+        }
+        
+        .terminal-output pre {
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
+        .terminal-input-area {
+            display: flex;
+            padding: 10px 15px;
+            background: #0a0a0a;
+            border-top: 1px solid #333;
+            align-items: center;
+        }
+        
+        .terminal-prompt {
+            color: var(--success);
+            font-family: var(--font-mono);
+            margin-right: 10px;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            outline: none;
+            caret-color: var(--accent);
+        }
+        
+        .terminal-input::placeholder {
+            color: #444;
+        }
+
+        .predicted-questions {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .q-chip {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #333;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .q-chip:hover {
+            background: var(--accent-glow);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+    </style>
+    
+    <!-- Load Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js"></script>
+    <!-- Marked.js for markdown parsing in terminal -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">TRAE_OJ // SYSTEM</div>
+        <div class="status-dot"></div>
+        <span>SERVER_ONLINE</span>
+    </header>
+
+    <div class="workspace">
+        <!-- Left Pane -->
+        <div class="pane problem-pane">
+            <div class="pane-header">DESCRIPTION.md</div>
+            <div class="problem-content">
+                <textarea id="problem-textarea" class="problem-editor">小S有一个由字符 'U' 和 'C' 组成的字符串 S，并希望在编辑距离不超过给定值 m 的条件下，尽可能多地在字符串中找到 "UCC" 子串。
+
+编辑距离定义为将字符串 S 转化为其他字符串时所需的最少编辑操作次数。允许的每次编辑操作是插入、删除或替换单个字符。你需要计算在给定的编辑距离限制 m 下，能够包含最多 "UCC" 子串的字符串可能包含多少个这样的子串。
+
+例如，对于字符串"UCUUCCCCC"和编辑距离限制m = 3，可以通过编辑字符串生成最多包含3个"UCC"子串的序列。
+
+约束条件：
+字符串长度不超过1000
+
+测试样例
+样例1：
+输入：m = 3,s = "UCUUCCCCC"
+输出：3
+
+样例2：
+输入：m = 6,s = "U"
+输出：2
+
+样例3：
+输入：m = 2,s = "UCCUUU"
+输出：2
+
+解释
+样例1：可以将字符串修改为 "UCCUCCUCC"（2 次替换操作，不超过给定值 m = 3），包含 3 个 "UCC" 子串。
+样例2：后面插入 5 个字符 "CCUCC"（5 次插入操作，不超过给定值 m = 6），可以将字符串修改为 "UCCUCC"，包含 2 个 "UCC" 子串。
+样例3：替换最后 2 个字符，可以将字符串修改为 "UCCUCC"，包含 2 个 "UCC" 子串。</textarea>
+            </div>
+        </div>
+
+        <!-- Right Panes -->
+        <div class="right-panes">
+            <!-- Code Editor -->
+            <div class="pane editor-pane">
+                <div class="pane-header">SOLUTION.PY</div>
+                <div id="monaco-container"></div>
+            </div>
+
+            <!-- Terminal -->
+            <div class="pane terminal-pane">
+                <div class="pane-header terminal-header">AI_ASSISTANT_TERMINAL</div>
+                <div class="terminal-output" id="terminal-output">
+                    <div class="message ai-msg">AI Assistant Initialized. Type your question below and press Enter.</div>
+                </div>
+                <div class="terminal-input-area">
+                    <span class="terminal-prompt">user@ai-oj:~$</span>
+                    <input type="text" class="terminal-input" id="chat-input" placeholder="Ask about complexity, bugs, or optimizations..." autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Code
+        const defaultCode = `def solution(m: int, s: str) -> int:
+    # PLEASE DO NOT MODIFY THE FUNCTION SIGNATURE
+    # write code here
+    pass
+
+if __name__ == '__main__':
+    print(solution(m=3, s="UCUUCCCCC") == 3)
+    print(solution(m=6, s="U") == 2)
+    print(solution(m=2, s="UCCUUU") == 2)
+`;
+
+        // Initialize Monaco Editor
+        let editor;
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('monaco-container'), {
+                value: defaultCode,
+                language: 'python',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+                padding: { top: 15 }
+            });
+            
+            // Custom Dark Theme Tweaks to match UI
+            monaco.editor.defineTheme('oj-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [],
+                colors: {
+                    'editor.background': '#18181b',
+                    'editor.lineHighlightBackground': '#27272a',
+                }
+            });
+            monaco.editor.setTheme('oj-dark');
+        });
+
+        // Chat Interaction
+        const inputEl = document.getElementById('chat-input');
+        const outputEl = document.getElementById('terminal-output');
+        const problemEl = document.getElementById('problem-textarea');
+        
+        let isWaiting = false;
+
+        function appendMessage(text, type, isMarkdown = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+            if (isMarkdown) {
+                msgDiv.innerHTML = marked.parse(text);
+            } else {
+                msgDiv.textContent = text;
+            }
+            outputEl.appendChild(msgDiv);
+            outputEl.scrollTop = outputEl.scrollHeight;
+            return msgDiv;
+        }
+
+        inputEl.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && !isWaiting) {
+                const query = inputEl.value.trim();
+                if (!query) return;
+
+                inputEl.value = '';
+                appendMessage(query, 'user-msg');
+                isWaiting = true;
+                
+                // Active streaming container
+                let currentAiMsg = appendMessage('', 'ai-msg', false);
+                let fullResponse = '';
+                
+                try {
+                    const response = await fetch('/api/analyze/stream', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: query,
+                            problem_content: problemEl.value,
+                            editor_code: editor ? editor.getValue() : defaultCode
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    
+                    let buffer = '';
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop(); // Keep incomplete line in buffer
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    
+                                    if (data.type === 'intent') {
+                                        const intentHtml = `[SYSTEM] Intent Analysis
+Action: ${data.data.action} | Safe: ${data.data.safe} | Need Code: ${data.data.need_code}`;
+                                        appendMessage(intentHtml, 'ai-msg intent');
+                                    } else if (data.type === 'content') {
+                                        fullResponse += data.data;
+                                        currentAiMsg.innerHTML = marked.parse(fullResponse);
+                                        outputEl.scrollTop = outputEl.scrollHeight;
+                                    } else if (data.type === 'predicted_questions') {
+                                        const qContainer = document.createElement('div');
+                                        qContainer.className = 'predicted-questions';
+                                        data.data.forEach(q => {
+                                            const chip = document.createElement('span');
+                                            chip.className = 'q-chip';
+                                            chip.textContent = '> ' + q.question;
+                                            chip.onclick = () => {
+                                                inputEl.value = q.question;
+                                                inputEl.focus();
+                                            };
+                                            qContainer.appendChild(chip);
+                                        });
+                                        outputEl.appendChild(qContainer);
+                                        outputEl.scrollTop = outputEl.scrollHeight;
+                                    } else if (data.type === 'error') {
+                                        appendMessage(`[ERROR] ${data.data}`, 'sys-error');
+                                    }
+                                } catch (e) {
+                                    console.error('Parse error on chunk:', e, line);
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    appendMessage(`[CONNECTION ERROR] ${err.message}`, 'sys-error');
+                } finally {
+                    isWaiting = false;
+                }
+            }
+        });
+        
+        // Focus input by default
+        inputEl.focus();
+    </script>
+</body>
+</html>
