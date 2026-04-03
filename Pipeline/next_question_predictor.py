@@ -21,9 +21,9 @@ class NextQuestionPredictor:
         try:
             qwen_model = ModelFactory.create(
                 model_platform=ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
-                model_type="Qwen/Qwen2.5-72B-Instruct",
+                model_type="glm4.7",
                 api_key=api_key,
-                url="https://api-inference.modelscope.cn/v1",
+                url="https://llmapi.paratera.com/v1",
                 model_config_dict=QwenConfig(temperature=0.7).as_dict(),  # 增加温度以提高创造性
             )
             

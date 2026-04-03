@@ -48,9 +48,9 @@ class MermaidAgent:
             logger.info("正在创建Mermaid生成助手...")
             qwen_model = ModelFactory.create(
                 model_platform=ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
-                model_type="Qwen/Qwen2.5-72B-Instruct",
+                model_type="glm4.7",
                 api_key=API_KEY,
-                url="https://api-inference.modelscope.cn/v1",
+                url="https://llmapi.paratera.com/v1",
                 model_config_dict=QwenConfig(temperature=0.2).as_dict(),
             )
 

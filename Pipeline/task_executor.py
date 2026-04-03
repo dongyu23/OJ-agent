@@ -27,7 +27,7 @@ class TaskExecutor:
         self.predictor = None      # 问题预测器
         self.client = openai.AsyncOpenAI(
             api_key=API_KEY,
-            base_url="https://api-inference.modelscope.cn/v1"
+            base_url="https://llmapi.paratera.com/v1"
         )
 
     def _create_assistant(self) -> ChatAgent:
@@ -35,9 +35,9 @@ class TaskExecutor:
         try:
             qwen_model = ModelFactory.create(
                 model_platform=ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
-                model_type="Qwen/Qwen2.5-72B-Instruct",
+                model_type="glm4.7",
                 api_key=API_KEY,
-                url="https://api-inference.modelscope.cn/v1",
+                url="https://llmapi.paratera.com/v1",
                 model_config_dict=QwenConfig(temperature=0.2).as_dict(),
             )
             
@@ -119,7 +119,7 @@ class TaskExecutor:
         """使用OpenAI API进行流式对话"""
         try:
             stream = await self.client.chat.completions.create(
-                model="Qwen/Qwen2.5-72B-Instruct",
+                model="glm4.7",
                 messages=messages,
                 stream=True
             )
