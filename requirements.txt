@@ -1,25 +1,25 @@
 # Web框架
 fastapi>=0.68.0
 uvicorn>=0.15.0
-streamlit==1.31.0
+streamlit
 
 # AI框架
-camel-ai==0.1.1
+camel-ai
 openai>=1.0.0
 
 # 工具库
-python-dotenv==1.0.0
-requests==2.31.0
+python-dotenv
+requests
 pydantic>=1.8.2
-typing-extensions==4.9.0
-loguru==0.7.2
+typing-extensions
+loguru
 
 # 开发工具
-pytest==8.0.0
-pytest-asyncio==0.23.5
-pytest-cov==4.1.0
-black==24.1.1
-isort==5.13.2
-flake8==7.0.0
-mypy==1.8.0
-pre-commit==3.6.0
+pytest
+pytest-asyncio
+pytest-cov
+black
+isort
+flake8
+mypy
+pre-commit
