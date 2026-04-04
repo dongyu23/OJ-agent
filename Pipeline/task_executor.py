@@ -118,15 +118,26 @@ class TaskExecutor:
     async def _stream_chat(self, messages: list) -> AsyncGenerator[str, None]:
         """使用OpenAI API进行流式对话"""
         try:
-            stream = await self.client.chat.completions.create(
+            # 引入 asyncio 在此处处理流
+            import asyncio
+            stream = await asyncio.to_thread(
+                self.client.chat.completions.create,
                 model="GLM-4.7",
                 messages=messages,
                 stream=True
             )
             
-            async for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+            for chunk in stream:
+                try:
+                    if getattr(chunk, 'choices', None) and len(chunk.choices) > 0:
+                        choice = chunk.choices[0]
+                        if getattr(choice, 'delta', None) and getattr(choice.delta, 'content', None):
+                            content = choice.delta.content
+                            if content:
+                                yield content
+                except Exception as parse_e:
+                    logger.warning(f"解析chunk出错: {parse_e}, chunk: {chunk}")
+                    continue
                     
         except Exception as e:
             logger.error(f"流式对话出错: {str(e)}")
@@ -222,10 +233,11 @@ class TaskExecutor:
             
             # 流式获取AI响应
             messages = [
+                {"role": "system", "content": self.assistant.system_message.content},
                 {"role": "user", "content": full_query}
             ]
             async for chunk in self._stream_chat(messages):
-                if chunk.strip():
+                if chunk:
                     yield {
                         "type": "content",
                         "data": chunk

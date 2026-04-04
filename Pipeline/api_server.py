@@ -86,6 +86,9 @@ async def analyze_stream(req: AnalyzeRequest):
                             yield ": ping\n\n"
                         except StopAsyncIteration:
                             break
+                        except Exception as inner_e:
+                            yield f"data: {json.dumps({'type': 'error', 'data': str(inner_e)})}\n\n"
+                            break
                 else:
                     yield f"data: {json.dumps({'type': 'content', 'data': '请求被阻止：可能存在安全风险'})}\n\n"
             else:
