@@ -73,9 +73,19 @@ async def analyze_stream(req: AnalyzeRequest):
                         yield f"data: {json.dumps({'type': 'predicted_questions', 'data': result.get('predicted_questions')})}\n\n"
                         
                 elif action == 'proceed':
-                    # 异步流式执行任务
-                    async for chunk in task_executor.execute_task_stream(req.query, intent_result.get('need_code', False)):
-                        yield f"data: {json.dumps(chunk)}\n\n"
+                    # 异步流式执行任务，增加心跳机制防代理超时
+                    import asyncio
+                    task_gen = task_executor.execute_task_stream(req.query, intent_result.get('need_code', False))
+                    while True:
+                        try:
+                            # 等待大模型输出，最多等待 5 秒
+                            chunk = await asyncio.wait_for(task_gen.__anext__(), timeout=5.0)
+                            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+                        except asyncio.TimeoutError:
+                            # 超时则发送心跳注释（不影响客户端解析，防代理掐断）
+                            yield ": ping\n\n"
+                        except StopAsyncIteration:
+                            break
                 else:
                     yield f"data: {json.dumps({'type': 'content', 'data': '请求被阻止：可能存在安全风险'})}\n\n"
             else:
@@ -95,4 +105,4 @@ if not os.path.exists(static_dir):
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
