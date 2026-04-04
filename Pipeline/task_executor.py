@@ -118,16 +118,17 @@ class TaskExecutor:
     async def _stream_chat(self, messages: list) -> AsyncGenerator[str, None]:
         """使用OpenAI API进行流式对话"""
         try:
-            # 引入 asyncio 在此处处理流
-            import asyncio
-            stream = await asyncio.to_thread(
-                self.client.chat.completions.create,
+            logger.info("开始调用 OpenAI 接口...")
+            stream = await self.client.chat.completions.create(
                 model="GLM-4.7",
                 messages=messages,
                 stream=True
             )
             
-            for chunk in stream:
+            logger.info("OpenAI 接口调用成功，开始迭代 stream")
+            chunk_count = 0
+            async for chunk in stream:
+                chunk_count += 1
                 try:
                     if getattr(chunk, 'choices', None) and len(chunk.choices) > 0:
                         choice = chunk.choices[0]
@@ -138,6 +139,7 @@ class TaskExecutor:
                 except Exception as parse_e:
                     logger.warning(f"解析chunk出错: {parse_e}, chunk: {chunk}")
                     continue
+            logger.info(f"OpenAI stream 迭代完成，共收到 {chunk_count} 个 chunk")
                     
         except Exception as e:
             logger.error(f"流式对话出错: {str(e)}")
@@ -254,8 +256,10 @@ class TaskExecutor:
                 'query': query
             }
             
+            import asyncio
             logger.info("开始预测后续问题...")
-            next_questions = self.predictor.predict_next_questions(
+            next_questions = await asyncio.to_thread(
+                self.predictor.predict_next_questions,
                 current_context=current_context,
                 task_response=""  # 流式输出时无法获取完整响应
             )

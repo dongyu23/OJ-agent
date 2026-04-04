@@ -41,12 +41,17 @@ async def analyze_stream(req: AnalyzeRequest):
     如果action是proceed，则调用流式任务执行器。
     """
     async def generate():
+        print(f"generate() called for query: {req.query}")
+        print(f"req: {req.dict()}")
         try:
+            import asyncio
             # 1. 更新题目和代码
             task_executor.set_problem_content(req.problem_content)
+            print("set_problem_content done")
             
             # 2. 意图识别
-            intent_result = recognition_server._analyze_intent(req.query)
+            intent_result = await asyncio.to_thread(recognition_server._analyze_intent, req.query)
+            print(f"intent_result: {intent_result}")
             
             # 发送意图分析结果
             yield f"data: {json.dumps({'type': 'intent', 'data': {'intent': req.query, 'safe': intent_result.get('safe', False), 'action': intent_result.get('action', 'block'), 'need_code': intent_result.get('need_code', False), 'response': '分析完成'}})}\n\n"
@@ -76,19 +81,24 @@ async def analyze_stream(req: AnalyzeRequest):
                     # 异步流式执行任务，增加心跳机制防代理超时
                     import asyncio
                     task_gen = task_executor.execute_task_stream(req.query, intent_result.get('need_code', False))
+                    next_task = None
                     while True:
-                        try:
-                            # 等待大模型输出，最多等待 5 秒
-                            chunk = await asyncio.wait_for(task_gen.__anext__(), timeout=5.0)
-                            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
-                        except asyncio.TimeoutError:
+                        if next_task is None:
+                            next_task = asyncio.create_task(task_gen.__anext__())
+                        done, pending = await asyncio.wait([next_task], timeout=5.0)
+                        if next_task in done:
+                            try:
+                                chunk = next_task.result()
+                                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+                                next_task = None
+                            except StopAsyncIteration:
+                                break
+                            except Exception as inner_e:
+                                yield f"data: {json.dumps({'type': 'error', 'data': str(inner_e)})}\n\n"
+                                break
+                        else:
                             # 超时则发送心跳注释（不影响客户端解析，防代理掐断）
                             yield ": ping\n\n"
-                        except StopAsyncIteration:
-                            break
-                        except Exception as inner_e:
-                            yield f"data: {json.dumps({'type': 'error', 'data': str(inner_e)})}\n\n"
-                            break
                 else:
                     yield f"data: {json.dumps({'type': 'content', 'data': '请求被阻止：可能存在安全风险'})}\n\n"
             else:
