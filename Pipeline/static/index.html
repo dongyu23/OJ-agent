@@ -605,10 +605,10 @@
         }
     </style>
     
+    <!-- Marked.js (Must be before Monaco loader to avoid AMD hijacking) -->
+    <script src="/marked.min.js"></script>
     <!-- Monaco Editor -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js"></script>
-    <!-- Marked.js -->
-    <script src="/marked.min.js"></script>
 </head>
 <body>
     <header class="navbar">
@@ -927,6 +927,7 @@ if __name__ == '__main__':
                                     }
                                     fullResponse += data.data;
                                     currentContentBody.innerHTML = marked.parse(fullResponse);
+                                    console.log("Updated AI response:", fullResponse);
                                     scrollToBottom();
                                 } else if (data.type === 'predicted_questions') {
                                     updateSuggestions(data.data);
@@ -934,7 +935,7 @@ if __name__ == '__main__':
                                     appendError(data.data);
                                 }
                             } catch (e) {
-                                console.error('Parse error:', e, jsonStr);
+                                console.error('Parse error:', e.message, jsonStr);
                             }
                         } else if (line.startsWith(':')) {
                             // Heartbeat comment, ignore

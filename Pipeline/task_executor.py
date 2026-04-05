@@ -124,7 +124,7 @@ class TaskExecutor:
                 messages=messages,
                 stream=True
             )
-            
+
             logger.info("OpenAI 接口调用成功，开始迭代 stream")
             chunk_count = 0
             async for chunk in stream:
@@ -140,7 +140,7 @@ class TaskExecutor:
                     logger.warning(f"解析chunk出错: {parse_e}, chunk: {chunk}")
                     continue
             logger.info(f"OpenAI stream 迭代完成，共收到 {chunk_count} 个 chunk")
-                    
+
         except Exception as e:
             logger.error(f"流式对话出错: {str(e)}")
             yield f"出错: {str(e)}"
@@ -249,13 +249,13 @@ class TaskExecutor:
             if self.predictor is None:
                 logger.info("初始化问题预测器...")
                 self.predictor = init_predictor(os.getenv('QWEN_API_KEY'))
-            
+
             current_context = {
                 'problem_content': self.problem_content,
                 'editor_code': self.editor_code if need_code else '',
                 'query': query
             }
-            
+
             import asyncio
             logger.info("开始预测后续问题...")
             next_questions = await asyncio.to_thread(
